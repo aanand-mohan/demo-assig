@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "Wireless Headphones",
+    "price": 79.99,
+    "description": "High-quality wireless headphones with noise cancellation",
+    "icon": "🎧"
+  },
+  {
+    "id": 2,
+    "name": "Smart Watch",
+    "price": 199.99,
+    "description": "Feature-rich smartwatch with health tracking",
+    "icon": "⌚"
+  },
+  {
+    "id": 3,
+    "name": "USB-C Cable",
+    "price": 14.99,
+    "description": "Durable and fast charging USB-C cable",
+    "icon": "🔌"
+  },
+  {
+    "id": 4,
+    "name": "Phone Case",
+    "price": 24.99,
+    "description": "Protective phone case with premium materials",
+    "icon": "📱"
+  },
+  {
+    "id": 5,
+    "name": "Portable Charger",
+    "price": 39.99,
+    "description": "20000mAh portable battery with fast charging",
+    "icon": "🔋"
+  }
+]
