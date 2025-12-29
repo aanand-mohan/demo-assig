@@ -20,10 +20,10 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 // Load products
-const productsPath = path.join(__dirname, 'products.json')
+const productsPath = path.join(__dirname, '../products.json')
 const products = JSON.parse(fs.readFileSync(productsPath, 'utf-8'))
 
-// In-memory orders (replace with DB in production)
+// In-memory orders (serverless = temporary)
 const orders = []
 
 // ================= PRODUCTS =================
@@ -38,7 +38,7 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product)
 })
 
-// ================= CREATE ORDER + SKYDO PAYMENT =================
+// ================= CREATE ORDER + SKYDO =================
 
 app.post('/api/create-order', async (req, res) => {
   try {
@@ -55,7 +55,6 @@ app.post('/api/create-order', async (req, res) => {
 
     const orderId = `ORD_${Date.now()}`
 
-    // Save order
     const order = {
       orderId,
       cartItems,
@@ -66,20 +65,15 @@ app.post('/api/create-order', async (req, res) => {
     }
     orders.push(order)
 
-    // Check for valid API key
-    if (!process.env.SKYDO_API_KEY || process.env.SKYDO_API_KEY.includes('your_skydo_api_key')) {
-      console.warn('⚠️  Using MOCK Skydo payment (Invalid API Key detected)')
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
+    // MOCK MODE (No Skydo key)
+    if (!process.env.SKYDO_API_KEY) {
       return res.json({
         orderId,
-        paymentUrl: `http://localhost:3000/?status=success&orderId=${orderId}`
+        paymentUrl: `https://example.com/mock-payment?orderId=${orderId}`
       })
     }
 
-    // Create Skydo payment request
+    // REAL SKYDO CALL
     const response = await axios.post(
       `${process.env.SKYDO_BASE_URL}/payment-requests`,
       {
@@ -101,8 +95,8 @@ app.post('/api/create-order', async (req, res) => {
       paymentUrl: response.data.payment_url
     })
   } catch (error) {
-    console.error('Skydo error:', error.message)
-    res.status(500).json({ error: 'Skydo payment creation failed' })
+    console.error(error)
+    res.status(500).json({ error: 'Payment failed' })
   }
 })
 
@@ -121,19 +115,10 @@ app.post('/api/skydo-webhook', (req, res) => {
   res.sendStatus(200)
 })
 
-// ================= ORDERS =================
-
-app.get('/api/orders', (req, res) => {
-  res.json(orders)
-})
-
 // ================= HEALTH =================
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server running with Skydo' })
+  res.json({ status: 'Skydo backend running on Vercel' })
 })
 
-app.listen(process.env.PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
-  console.log(`💰 Skydo payment flow enabled`)
-})
+export default app
