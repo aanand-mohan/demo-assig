@@ -4,6 +4,7 @@ import Header from './components/Header'
 import ProductList from './components/ProductList'
 import Cart from './components/Cart'
 import Checkout from './pages/Checkout'
+import { BASE_URL } from './confing/app'
 
 function App() {
   const [products, setProducts] = useState([])
@@ -18,7 +19,7 @@ function App() {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('/api/products')
+        const response = await axios.get(`${BASE_URL}/api/products`)
         setProducts(response.data)
         setError(null)
       } catch (err) {

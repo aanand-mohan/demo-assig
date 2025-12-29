@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { BASE_URL } from '../confing/app' 
 
 export default function Checkout({ cart, onBack, setCart }) {
   const [loading, setLoading] = useState(false)
@@ -31,7 +32,7 @@ export default function Checkout({ cart, onBack, setCart }) {
       }
 
       // Create order and get Skydo payment URL
-      const response = await axios.post('/api/create-order', {
+      const response = await axios.post(`${BASE_URL}/api/create-order`, {
         cartItems: cart,
         customer
       })
