@@ -19,7 +19,7 @@ function App() {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const response = await axios.get(`${BASE_URL}/api/products`)
+        const response = await axios.get(`${BASE_URL}/products`)
         setProducts(response.data)
         setError(null)
       } catch (err) {

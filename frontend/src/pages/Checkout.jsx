@@ -1,21 +1,23 @@
-import { useState } from 'react'
-import axios from 'axios'
-import { BASE_URL } from '../confing/app' 
+import { useState } from "react"
+import axios from "axios"
+import { BASE_URL } from "../confing/app"
 
 export default function Checkout({ cart, onBack, setCart }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  
-  // Form state
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [address, setAddress] = useState('')
-  const [city, setCity] = useState('')
-  const [zipCode, setZipCode] = useState('')
 
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [address, setAddress] = useState("")
+  const [city, setCity] = useState("")
+  const [zipCode, setZipCode] = useState("")
 
-  const handleSubmit = async (e) => {
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  )
+
+  const handleSubmit = async e => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -31,20 +33,38 @@ export default function Checkout({ cart, onBack, setCart }) {
         }
       }
 
-      // Create order and get Skydo payment URL
-      const response = await axios.post(`${BASE_URL}/api/create-order`, {
-        cartItems: cart,
-        customer
-      })
+      const response = await axios.post(
+        `${BASE_URL}/create-order`,
+        {
+          cartItems: cart,
+          customer
+        }
+      )
 
-      const { paymentUrl } = response.data
+      // MOCK MODE (no API key)
+      if (response.data.success) {
+        alert(response.data.message)
 
-      // Redirect to Skydo payment page
-      window.location.href = paymentUrl
+        setCart([])
+        setLoading(false)
+        return
+      }
+
+      // REAL PAYMENT MODE
+      if (response.data.paymentUrl) {
+        window.location.href = response.data.paymentUrl
+        return
+      }
+
+      setError("Unexpected response. Please try again.")
+      setLoading(false)
 
     } catch (err) {
-      console.error('Checkout error:', err)
-      setError(err.response?.data?.error || 'Failed to initiate payment. Please try again.')
+      console.error("Checkout error:", err)
+      setError(
+        err.response?.data?.error ||
+          "Failed to initiate payment. Please try again."
+      )
       setLoading(false)
     }
   }
@@ -54,16 +74,17 @@ export default function Checkout({ cart, onBack, setCart }) {
       <h2 className="text-3xl font-bold text-gray-800 mb-8">Checkout</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Checkout Form */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-md p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={e => setFullName(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="John Doe"
@@ -71,11 +92,13 @@ export default function Checkout({ cart, onBack, setCart }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="john@example.com"
@@ -83,11 +106,13 @@ export default function Checkout({ cart, onBack, setCart }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Address
+                </label>
                 <input
                   type="text"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={e => setAddress(e.target.value)}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="123 Main Street"
@@ -96,22 +121,27 @@ export default function Checkout({ cart, onBack, setCart }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City
+                  </label>
                   <input
                     type="text"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={e => setCity(e.target.value)}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="New York"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Zip Code
+                  </label>
                   <input
                     type="text"
                     value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
+                    onChange={e => setZipCode(e.target.value)}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="10001"
@@ -134,24 +164,30 @@ export default function Checkout({ cart, onBack, setCart }) {
                 >
                   Back to Cart
                 </button>
+
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
                 >
-                  {loading ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+                  {loading ? "Processing..." : `Pay $${total.toFixed(2)}`}
                 </button>
               </div>
             </form>
           </div>
         </div>
 
-        {/* Order Summary */}
         <div className="bg-white rounded-lg shadow-md p-6 h-fit">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            Order Summary
+          </h3>
+
           <div className="space-y-3 mb-6">
             {cart.map(item => (
-              <div key={item.id} className="flex justify-between text-gray-600 text-sm">
+              <div
+                key={item.id}
+                className="flex justify-between text-gray-600 text-sm"
+              >
                 <span>
                   {item.name} x {item.quantity}
                 </span>
@@ -165,10 +201,12 @@ export default function Checkout({ cart, onBack, setCart }) {
               <span>Subtotal:</span>
               <span>${total.toFixed(2)}</span>
             </div>
+
             <div className="flex justify-between mb-4 text-gray-600">
               <span>Shipping:</span>
               <span>FREE</span>
             </div>
+
             <div className="border-t pt-4 flex justify-between text-lg font-bold text-gray-800">
               <span>Total:</span>
               <span className="text-blue-600">
@@ -181,4 +219,3 @@ export default function Checkout({ cart, onBack, setCart }) {
     </div>
   )
 }
-
