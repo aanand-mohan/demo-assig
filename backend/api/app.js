@@ -33,7 +33,7 @@ const products = JSON.parse(fs.readFileSync(productsPath, "utf-8"))
 
 const orders = []
 
-// PRODUCTS
+// ================= PRODUCTS =================
 app.get("/api/products", (req, res) => {
   res.json(products)
 })
@@ -44,7 +44,7 @@ app.get("/api/products/:id", (req, res) => {
   res.json(product)
 })
 
-// CREATE ORDER
+// ================= CREATE ORDER =================
 app.post("/api/create-order", async (req, res) => {
   try {
     const { cartItems, customer } = req.body
@@ -71,14 +71,21 @@ app.post("/api/create-order", async (req, res) => {
 
     orders.push(order)
 
-    // mock mode if no Skydo key
+    // ================= MOCK MODE (NO API KEY) =================
     if (!process.env.SKYDO_API_KEY) {
+      order.status = "PAID"
+      order.paidAt = new Date()
+
       return res.json({
+        success: true,
+        message: "Mock payment successful. No real API key configured.",
         orderId,
-        paymentUrl: `https://example.com/mock-payment?orderId=${orderId}`
+        amount,
+        status: order.status
       })
     }
 
+    // ================= REAL SKYDO CALL =================
     const response = await axios.post(
       `${process.env.SKYDO_BASE_URL}/payment-requests`,
       {
@@ -105,7 +112,7 @@ app.post("/api/create-order", async (req, res) => {
   }
 })
 
-// WEBHOOK
+// ================= WEBHOOK =================
 app.post("/api/skydo-webhook", (req, res) => {
   const { reference_id, payment_status } = req.body
 
@@ -119,7 +126,7 @@ app.post("/api/skydo-webhook", (req, res) => {
   res.sendStatus(200)
 })
 
-// HEALTH
+// ================= HEALTH =================
 app.get("/api/health", (req, res) => {
   res.json({ status: "Skydo backend running on Vercel" })
 })
