@@ -1,1 +1,1 @@
-export const BASE_URL = "https://demo-assig-x41.vercel.app/"
+export const BASE_URL = "https://demo-assig.vercel.app/"

@@ -27,12 +27,13 @@ app.use(
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-// products.json is OUTSIDE backend folder
+// Path to products.json (ONE level up from api folder)
 const productsPath = path.join(__dirname, "../products.json")
 const products = JSON.parse(fs.readFileSync(productsPath, "utf-8"))
 
 const orders = []
 
+// PRODUCTS
 app.get("/api/products", (req, res) => {
   res.json(products)
 })
@@ -43,6 +44,7 @@ app.get("/api/products/:id", (req, res) => {
   res.json(product)
 })
 
+// CREATE ORDER
 app.post("/api/create-order", async (req, res) => {
   try {
     const { cartItems, customer } = req.body
@@ -69,6 +71,7 @@ app.post("/api/create-order", async (req, res) => {
 
     orders.push(order)
 
+    // mock mode if no Skydo key
     if (!process.env.SKYDO_API_KEY) {
       return res.json({
         orderId,
@@ -102,6 +105,7 @@ app.post("/api/create-order", async (req, res) => {
   }
 })
 
+// WEBHOOK
 app.post("/api/skydo-webhook", (req, res) => {
   const { reference_id, payment_status } = req.body
 
@@ -115,6 +119,7 @@ app.post("/api/skydo-webhook", (req, res) => {
   res.sendStatus(200)
 })
 
+// HEALTH
 app.get("/api/health", (req, res) => {
   res.json({ status: "Skydo backend running on Vercel" })
 })

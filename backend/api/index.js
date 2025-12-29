@@ -1,6 +1,7 @@
 import app from "./app.js"
 
 export default function handler(req, res) {
+  // CORS headers (force for Vercel)
   res.setHeader("Access-Control-Allow-Origin", "*")
   res.setHeader(
     "Access-Control-Allow-Methods",
