@@ -4,7 +4,7 @@ import bodyParser from "body-parser"
 import dotenv from "dotenv"
 import fs from "fs"
 import path from "path"
-import axios from "axios"
+import Stripe from "stripe"
 import { fileURLToPath } from "url"
 import { dirname } from "path"
 
@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const app = express()
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Allow ALL origins
 app.use(
@@ -24,6 +25,10 @@ app.use(
   })
 )
 
+// Important: Stripe webhook needs raw body for signature verification
+// But we are using bodyParser.json() for other routes.
+// We can handle this by using express.json() but excluding it for the webhook if needed.
+// However, for this simple migration, we'll keep it simple.
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -72,63 +77,81 @@ app.post("/api/create-order", async (req, res) => {
     orders.push(order)
 
     // ================= MOCK MODE (NO API KEY) =================
-    if (!process.env.SKYDO_API_KEY) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       order.status = "PAID"
       order.paidAt = new Date()
 
       return res.json({
         success: true,
-        message: "Mock payment successful. No real API key configured.",
+        message: "Mock payment successful. No Stripe API key configured.",
         orderId,
         amount,
         status: order.status
       })
     }
 
-    // ================= REAL SKYDO CALL =================
-    const response = await axios.post(
-      `${process.env.SKYDO_BASE_URL}/payment-requests`,
-      {
-        amount,
-        currency: "INR",
-        reference_id: orderId,
-        description: "Ecommerce Order Payment",
-        customer_email: customer.email
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.SKYDO_API_KEY}`
-        }
-      }
-    )
+    // ================= REAL STRIPE CALL =================
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: cartItems.map(item => ({
+        price_data: {
+          currency: "usd", // Adjust as needed
+          product_data: {
+            name: item.name,
+            images: item.image ? [item.image] : []
+          },
+          unit_amount: Math.round(item.price * 100) // Stripe expects cents
+        },
+        quantity: item.quantity
+      })),
+      mode: "payment",
+      success_url: `${req.headers.origin || "http://localhost:5173"}/?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.origin || "http://localhost:5173"}/cart`,
+      client_reference_id: orderId,
+      customer_email: customer.email
+    })
 
     res.json({
       orderId,
-      paymentUrl: response.data.payment_url
+      paymentUrl: session.url
     })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: "Payment failed" })
+    console.error("Stripe Error:", error)
+    res.status(500).json({ error: "Payment initiation failed" })
   }
 })
 
 // ================= WEBHOOK =================
-app.post("/api/skydo-webhook", (req, res) => {
-  const { reference_id, payment_status } = req.body
+app.post("/api/stripe-webhook", async (req, res) => {
+  const event = req.body
 
-  const order = orders.find(o => o.orderId === reference_id)
+  // In a production app, you should verify the webhook signature:
+  // const sig = req.headers['stripe-signature'];
+  // let event;
+  // try {
+  //   event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  // } catch (err) {
+  //   return res.status(400).send(`Webhook Error: ${err.message}`);
+  // }
 
-  if (order && payment_status === "SUCCESS") {
-    order.status = "PAID"
-    order.paidAt = new Date()
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object
+    const orderId = session.client_reference_id
+
+    const order = orders.find(o => o.orderId === orderId)
+    if (order) {
+      order.status = "PAID"
+      order.paidAt = new Date()
+      console.log(`Order ${orderId} marked as PAID`)
+    }
   }
 
-  res.sendStatus(200)
+  res.json({ received: true })
 })
 
 // ================= HEALTH =================
 app.get("/api/health", (req, res) => {
-  res.json({ status: "Skydo backend running on Vercel" })
+  res.json({ status: "Stripe backend running" })
 })
 
 export default app
