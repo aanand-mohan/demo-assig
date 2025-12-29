@@ -28,7 +28,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 // products.json is OUTSIDE backend folder
-const productsPath = path.join(__dirname, "../../products.json")
+const productsPath = path.join(__dirname, "../products.json")
 const products = JSON.parse(fs.readFileSync(productsPath, "utf-8"))
 
 const orders = []
