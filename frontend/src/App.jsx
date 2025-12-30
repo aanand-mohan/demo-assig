@@ -4,6 +4,7 @@ import Header from './components/Header'
 import ProductList from './components/ProductList'
 import Cart from './components/Cart'
 import Checkout from './pages/Checkout'
+import PaymentSuccess from './components/PaymentSuccess'
 import { BASE_URL } from './confing/app'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
   const [cart, setCart] = useState([])
   const [showCart, setShowCart] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -83,6 +85,7 @@ function App() {
   const handleBackToShop = () => {
     setShowCart(false)
     setShowCheckout(false)
+    setShowSuccess(false)
     // Clear URL params
     window.history.replaceState({}, document.title, window.location.pathname)
   }
@@ -93,10 +96,22 @@ function App() {
     if (params.get('status') === 'success') {
       setCart([])
       localStorage.removeItem('cart')
-      alert('Payment Successful! Thank you for your order.')
-      handleBackToShop()
+      setShowSuccess(true)
+      // Clean up URL without reload immediately or keep it for the state?
+      // We keep the state 'showSuccess' so UI renders. Cleaning URL is done in handleBackToShop or we can do it here silently.
     }
   }, [])
+
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header cartCount={0} onCartClick={() => setShowCart(!showCart)} />
+        <div className="container mx-auto px-4 py-8">
+          <PaymentSuccess onContinue={handleBackToShop} />
+        </div>
+      </div>
+    )
+  }
 
   if (showCheckout) {
     return <Checkout cart={cart} onBack={handleBackToShop} setCart={setCart} />

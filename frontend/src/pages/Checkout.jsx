@@ -43,10 +43,8 @@ export default function Checkout({ cart, onBack, setCart }) {
 
       // MOCK MODE (no API key)
       if (response.data.success) {
-        alert(response.data.message)
-
-        setCart([])
-        setLoading(false)
+        // Redirect to success URL to trigger App.jsx logic
+        window.location.href = "/?status=success"
         return
       }
 
@@ -63,7 +61,7 @@ export default function Checkout({ cart, onBack, setCart }) {
       console.error("Checkout error:", err)
       setError(
         err.response?.data?.error ||
-          "Failed to initiate payment. Please try again."
+        "Failed to initiate payment. Please try again."
       )
       setLoading(false)
     }
