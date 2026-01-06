@@ -5,7 +5,7 @@ import ProductList from './components/ProductList'
 import Cart from './components/Cart'
 import Checkout from './pages/Checkout'
 import PaymentSuccess from './components/PaymentSuccess'
-import { BASE_URL } from './confing/app'
+import { BASE_URL } from './config/app'
 
 function App() {
   const [products, setProducts] = useState([])

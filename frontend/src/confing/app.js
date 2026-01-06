@@ -1,1 +1,0 @@
-export const BASE_URL = "https://demo-assig.vercel.app/api";

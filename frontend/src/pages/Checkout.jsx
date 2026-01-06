@@ -1,6 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
-import { BASE_URL } from "../confing/app"
+import { BASE_URL } from "../config/app"
 
 export default function Checkout({ cart, onBack, setCart }) {
   const [loading, setLoading] = useState(false)
